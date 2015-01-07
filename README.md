@@ -11,6 +11,6 @@ Author: Yuzhe Wang
 
 E-mail: wgyuzhe@gmail.com/wangyuzhe@lzb.ac.cn
 
-Affilation: State Key Laboratory of Cryospheric Sciences, Chinese Academy of Sciences
+Affiliation: State Key Laboratory of Cryospheric Sciences, Chinese Academy of Sciences
 
 Address: Donggang West Road 320, Lanzhou, China
