@@ -4,7 +4,7 @@
 # Description: Coregister DEM_B to DEM_A using Nuth's method
 # Reference: Nuth, Kaab, 2011, the Cryosphere
 # Author: Yuzhe Wang
-# E-mail: wgyuzhe@gmail.com
+# E-mail: yuzhe.wang@foxmail.com
 # Affiliation: State Key Laboratory of Cryospheric Sciences, Lanzhou
 # History:
 # 2014-11-8, 1st version;
