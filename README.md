@@ -12,7 +12,7 @@ The programmes invoke arcpy, numpy, scipy or matplotlib.
 
 Author: Yuzhe Wang
 
-E-mail: yuzhe.wang@foxmailcom
+E-mail: yuzhe.wang@foxmail.com
 
 Affiliation: State Key Laboratory of Cryospheric Sciences, Chinese Academy of Sciences
 
