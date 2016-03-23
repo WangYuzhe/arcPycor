@@ -4,7 +4,7 @@
 # Description: Coregister DEM to point shapefile (ICESat, LiDAR, ...) using Nuth's method
 # Reference: Nuth, Kaab, 2011, the Cryosphere
 # Author: Yuzhe Wang
-# E-mail: wgyuzhe@gmail.com
+# E-mail: yuzhe.wang@foxmail.com
 # Affiliation: State Key Laboratory of Cryospheric Sciences, Lanzhou
 # History:
 # 2014-11-17, 1st version;
