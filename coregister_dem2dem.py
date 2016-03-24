@@ -36,7 +36,7 @@ ResultFile = "E:/ICESat/CoregisterDEM/Result/"
 DEM_A = "dem_a"
     # Master DEM
 DEM_B = "dem_b"
-    # Need to be coregistered DEM
+    # Slave DEM
 OffGlacier = "OffGlacier.shp"
     # Stable terrain assumed no elevation change
 # ---------------------------------------------------------------------------
