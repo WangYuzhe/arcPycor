@@ -1,4 +1,4 @@
-The two python programmes can automatically co-register the satellite elevation data sets (e.g. DEM, laser altimetry data sets, GPS). They should be used with arcpy and call the modules of arcpy, numpy, scipy or matplotlib.
+The two python programmes can automatically co-register the satellite elevation data sets (e.g. DEM, laser altimetry data sets, GPS). They should be used with arcpy and call the modules of numpy, scipy or matplotlib.
 
 coregister_dem2dem.py can coregister DEM B (slave DEM) to DEM A (master DEM).
 coregister_dem2point.py can coregister DEM (slave DEM) to elevation points (e.g. LiDAR, ICESat, GPS).
