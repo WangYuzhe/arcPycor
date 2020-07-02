@@ -26,5 +26,5 @@ To co-register elevation datasets, open the Coregister_DEM’ tool and specify t
 **Master Elevation points**: Select the elevation points (shapefile)
 
 **Elevation field name**: Set the field name representing the elevation of 'Master Elevation points' (e.g. z)
-    
+
 ![](https://github.com/WangYuzhe/arcPycor/raw/master/fig_implementation.png)
