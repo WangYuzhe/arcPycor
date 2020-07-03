@@ -30,4 +30,4 @@ To co-register elevation datasets, open the Coregister_DEM’ tool and specify t
 
 **Elevation field name**: Set the field name representing the elevation of 'Master Elevation points' (e.g. z)
 
-![](fig_implementation.png)
+![Implementation details](fig_implementation.png)
