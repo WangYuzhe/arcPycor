@@ -1,12 +1,12 @@
 '''
 pycor_dem2point.py
 
-Description: Coregister slave DEM to master DEM using Nuth-Kaeaeb algorithm.
+Description: Coregister subordinate DEM to main DEM using Nuth-Kaeaeb algorithm.
 Reference: Nuth, C. and Kaeaeb, A. (2011): http://doi.org/10.5194/tc-5-271-2011
 
 Inputs:
-(1) master elevation points
-(2) slave DEM
+(1) main elevation points
+(2) subordinate DEM
 (3) polygon shapefile of stable terrain
 
 Outputs:
@@ -57,7 +57,7 @@ os.makedirs(dirOutputs)
 # point shapefile
 shp_points = arcpy.GetParameterAsText(1)
 
-# slave DEM
+# subordinate DEM
 DEM = arcpy.GetParameterAsText(2)
 
 # stable terrain
@@ -92,10 +92,10 @@ while 1:
     arcpy.AddMessage("--------------------------------------------------------------")
     arcpy.AddMessage("Iteration {0} is running!".format(iteration))
 
-    # Get the slope of the slave DEM [degree]
+    # Get the slope of the subordinate DEM [degree]
     slp = Slope(DEM_after, "DEGREE", "1")
 
-    # Get the aspect of the slave DEM [degree]
+    # Get the aspect of the subordinate DEM [degree]
     asp = Aspect(DEM_after)
 
     # Extract raster values using point shapefile

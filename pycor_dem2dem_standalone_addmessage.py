@@ -1,12 +1,12 @@
 ﻿'''
 pycor_dem2dem.py
 
-Description: Coregister slave DEM to master DEM using Nuth-Kaeaeb algorithm.
+Description: Coregister subordinate DEM to main DEM using Nuth-Kaeaeb algorithm.
 Reference: Nuth, C. and Kaeaeb, A. (2011): http://doi.org/10.5194/tc-5-271-2011
 
 Inputs:
-(1) master DEM
-(2) slave DEM
+(1) main DEM
+(2) subordinate DEM
 (3) polygon shapefile of stable terrain
 
 Outputs:
@@ -52,19 +52,19 @@ if os.path.exists(dirOutputs):
     shutil.rmtree(dirOutputs)
 os.makedirs(dirOutputs)
 
-# master DEM
-DEM_master = "DEM_master.tif"
+# main DEM
+DEM_main = "DEM_main.tif"
 
-# slave DEM
-DEM_slave = "DEM_slave1.tif"
+# subordinate DEM
+DEM_subordinate = "DEM_subordinate1.tif"
 
 # stable terrain
 OffGlacier = "OffGlacier.shp"
 
 # Initializations
 iteration = 0
-DEM_slave_before = DEM_slave
-DEM_slave_after = DEM_slave
+DEM_subordinate_before = DEM_subordinate
+DEM_subordinate_after = DEM_subordinate
 result_mean = [0]
 result_std = [0]
 ShiftX = [0]
@@ -72,7 +72,7 @@ ShiftY = [0]
 file_shiftVec = os.path.join(dirOutputs, "shiftVec" + ".csv")
 
 # delete unused variables
-del DEM_slave
+del DEM_subordinate
 
 # Define CosineFitting function
 def CosineFitting(x, a, b, c):
@@ -84,13 +84,13 @@ while 1:
     arcpy.AddMessage("Iteration {0} is running!".format(iteration))
     
     # DEM difference [m]
-    dh = Raster(DEM_master) - Raster(DEM_slave_after)
+    dh = Raster(DEM_main) - Raster(DEM_subordinate_after)
     
-    # slope of the slave DEM [degree]
-    slp = Slope(DEM_slave_after, "DEGREE", "1")
+    # slope of the subordinate DEM [degree]
+    slp = Slope(DEM_subordinate_after, "DEGREE", "1")
     
-    # aspect of the slave DEM [degree]
-    asp = Aspect(DEM_slave_after)
+    # aspect of the subordinate DEM [degree]
+    asp = Aspect(DEM_subordinate_after)
     
     # Mask 'dh' using statale terrain polygon
     dh_mask = ExtractByMask(dh, OffGlacier)
@@ -184,7 +184,7 @@ while 1:
         logic4 = logic2 and logic3
 
         if logic1 or logic4:
-            DEM_slave_final = "DEM_shift" + str(iteration-1) # just string
+            DEM_subordinate_final = "DEM_shift" + str(iteration-1) # just string
             sum_ShiftX = np.sum(ShiftX)
             sum_ShiftY = np.sum(ShiftY)
 
@@ -194,16 +194,16 @@ while 1:
                
             arcpy.AddMessage("********************Final Result********************")
             arcpy.AddMessage("Note: results are saved in {0}".format(dirOutputs))
-            arcpy.AddMessage("The final shifted DEM: {0}".format(DEM_slave_final))
+            arcpy.AddMessage("The final shifted DEM: {0}".format(DEM_subordinate_final))
             arcpy.AddMessage("The final shift X: {0:.1f}".format(sum_ShiftX))
             arcpy.AddMessage("The final shift Y: {0:.1f}".format(sum_ShiftY))
             
             break
     
-    # Shift the slave DEM
-    DEM_slave_after = "DEM_shift" + str(iteration)
-    arcpy.Shift_management(DEM_slave_before, DEM_slave_after, str(ShiftX1), str(ShiftY1))
-    DEM_slave_before = DEM_slave_after
+    # Shift the subordinate DEM
+    DEM_subordinate_after = "DEM_shift" + str(iteration)
+    arcpy.Shift_management(DEM_subordinate_before, DEM_subordinate_after, str(ShiftX1), str(ShiftY1))
+    DEM_subordinate_before = DEM_subordinate_after
 
     
 for i in range(iteration-1):
