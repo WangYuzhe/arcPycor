@@ -77,7 +77,7 @@ arcpy.DeleteField_management(points_in_polygon, ["Join_Count", "TARGET_FID"])
 iteration = 0
 DEM_before = DEM
 DEM_after = DEM
-result_mean = [0]
+result_mean = []
 result_std = [0]
 ShiftX = [0]
 ShiftY = [0]
@@ -144,10 +144,11 @@ while 1:
 
     # statistic results of dh
     mean_dh = np.mean(dh_table1)
-    std_dh = np.std(dh_table1)
-    result_mean.append(mean_dh)
-    result_std.append(std_dh)
+    result_mean_dh.append(mean_dh)
     
+    std_dh = np.std(dh_table1)
+    result_std_dh.append(std_dh)
+
     arcpy.AddMessage("Mean dh of iteration {0}: {1:.1f}".format(iteration, mean_dh))
     arcpy.AddMessage("Standard deviation of dh of iteration {0}: {1:.1f}".format(iteration, std_dh))
 
@@ -201,9 +202,9 @@ while 1:
     
     # Solve for parameters (a, b and c) iteratively until the improvement of std less than 2%
     if iteration>1:
-        logic1 = result_std[iteration] < 1e-1
-        logic2 = result_std[iteration] <= result_std[iteration-1]
-        logic3 = (result_std[iteration-1] - result_std[iteration])/(result_std[iteration-1]+1e-4) < 0.02
+        logic1 = result_std_dh[iteration] < 1e-1
+        logic2 = result_std_dh[iteration] <= result_std_dh[iteration-1]
+        logic3 = (result_std_dh[iteration-1] - result_std_dh[iteration])/(result_std_dh[iteration-1]+1e-4) < 0.02
         logic4 = logic2 and logic3
 
         if logic1 or logic4:
@@ -227,10 +228,11 @@ while 1:
     arcpy.Shift_management(DEM_before, DEM_after, str(ShiftX1), str(ShiftY1))
     DEM_before = DEM_after
 
-for i in range(iteration-1):
-    iter_tag = i+1
-    indata_del = "DEMsh"+str(iter_tag)
-    arcpy.Delete_management(indata_del)
+if iteration<2:
+    for i in range(iteration-2):
+        iter_tag = i+1
+        indata_del = "DEMsh"+str(iter_tag)
+        arcpy.Delete_management(indata_del)
     
 endTime = time.clock()
 arcpy.AddMessage("Running time: {0}".format(int(endTime-startTime)))
