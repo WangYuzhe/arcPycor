@@ -46,7 +46,8 @@ else:
     raise LicenseError
 
 # Set environment workspace in current directory
-env.workspace = r"E:\Mix\WYZ_AcademicWriting\paper_pycor\demo_data"
+path_script = os.path.dirname(os.path.abspath(__file__))
+env.workspace = os.path.join(path_script, 'benchmark_data')
                   
 # Folder for outputs
 dirOutputs = os.path.join(env.workspace, 'outputs')
