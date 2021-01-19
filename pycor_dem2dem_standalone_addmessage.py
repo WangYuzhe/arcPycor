@@ -44,8 +44,12 @@ else:
     raise LicenseError
 
 # Set environment workspace in current directory
-path_script = os.path.dirname(os.path.abspath(__file__))
-env.workspace = os.path.join(path_script, 'benchmark_data')
+# path_script = os.path.dirname(os.path.abspath(__file__))
+# env.workspace = os.path.join(path_script, 'benchmark_data')
+# env.workspace = r"E:\Mix\WYZ_AcademicWriting\paper_pycor\demo_data\benchmark_data"
+# env.workspace = r"E:\Mix\WYZ_AcademicWriting\paper_pycor\demo_data\test_site_data\everest"
+env.workspace = r"E:\Mix\WYZ_AcademicWriting\paper_pycor\demo_data\test_site_data\karakoram"
+# env.workspace = r"E:\Mix\WYZ_AcademicWriting\paper_pycor\demo_data\test_site_data\tibet"
 
 # Folder for outputs
 dirOutputs = os.path.join(env.workspace, 'outputs')
@@ -53,14 +57,26 @@ if os.path.exists(dirOutputs):
     shutil.rmtree(dirOutputs)
 os.makedirs(dirOutputs)
 
-# master DEM
-DEM_master = "DEM_master.tif"
+# # master DEM
+# DEM_master = "DEM_master.tif"
 
-# slave DEM
-DEM_slave = "DEM_slave1.tif"
+# # slave DEM
+# DEM_slave = "DEM_slave1.tif"
 
-# stable terrain
-OffGlacier = "OffGlacier.shp"
+# # stable terrain
+# stable_terrain = "OffGlacier.shp"
+
+# DEM_master = "tdm_eve_utm"
+# DEM_slave = "srtm_eve_utm"
+# stable_terrain = "stable_terrain_eve.shp"
+
+DEM_master = "tdm_kar_utm"
+DEM_slave = "aster_kar_utm"
+stable_terrain = "stable_terrain_kar.shp"
+
+# DEM_master = "srtm_tib_utm"
+# DEM_slave = "aster_tib_utm"
+# stable_terrain = "stable_terrain_tib.shp"
 
 # Initializations
 iteration = 0
@@ -68,8 +84,8 @@ DEM_slave_before = DEM_slave
 DEM_slave_after = DEM_slave
 result_mean_dh = [0]
 result_std_dh = [0]
-ShiftX = []
-ShiftY = []
+ShiftX = [0]
+ShiftY = [0]
 file_shiftVec = os.path.join(dirOutputs, "shiftVec" + ".csv")
 
 # delete unused variables
@@ -86,6 +102,9 @@ while 1:
     
     # DEM difference [m]
     dh = Raster(DEM_master) - Raster(DEM_slave_after)
+        
+    if iteration==1:
+        dh.save(os.path.join(dirOutputs, "dh_init"))
     
     # slope of the slave DEM [degree]
     slp = Slope(DEM_slave_after, "DEGREE", "1")
@@ -94,7 +113,7 @@ while 1:
     asp = Aspect(DEM_slave_after)
     
     # Mask 'dh' using statale terrain polygon
-    dh_mask = ExtractByMask(dh, OffGlacier)
+    dh_mask = ExtractByMask(dh, stable_terrain)
     
     # Mask 'slp' and 'asp' using 'dh_mask' in order to keep same georeference as 'dh_mask'
     slp_mask = ExtractByMask(slp, dh_mask)
@@ -113,8 +132,10 @@ while 1:
     file_dh = os.path.join(dirOutputs, "dh" + str(iteration) + '.csv')
     np.savetxt(file_dh, dh_mask_arr, delimiter=',')
     
-    # Criteria: |dh| < 70 m and slope > 5 degrees
-    index1 = np.where((dh_mask_arr>-70) & (dh_mask_arr<70) & (slp_mask_arr>5))
+    # Criteria: |dh| < 70 m and 5 < slope < 45.
+    # slope>5 is cited from Purinton&Bookhagen, 2018, Earth Surface Dynamics.
+    # slope<45 is cited from Berthier et al., 2019, Journal of Glaciology.
+    index1 = np.where((dh_mask_arr>-70) & (dh_mask_arr<70) & (slp_mask_arr>5) & (slp_mask_arr<45))
     dh_mask_arr1 = dh_mask_arr[index1[0], index1[1]]
     slp_mask_arr1 = slp_mask_arr[index1[0], index1[1]]
     asp_mask_arr1 = asp_mask_arr[index1[0], index1[1]]
@@ -181,38 +202,46 @@ while 1:
     
     # Solve for parameters (a, b and c) iteratively until the improvement of std less than 2%
     if iteration>1:
-        logic1 = result_std_dh[iteration] < 1e-1
-        logic2 = result_std_dh[iteration] <= result_std_dh[iteration-1]
-        logic3 = (result_std_dh[iteration-1] - result_std_dh[iteration])/(result_std_dh[iteration-1]+1e-4) < 0.02        
+        logic1 = abs(result_std_dh[iteration]) < 0.1
+        logic2 = abs(result_std_dh[iteration]) <= abs(result_std_dh[iteration-1])
+        logic3 = abs((result_std_dh[iteration-1] - result_std_dh[iteration])/(result_std_dh[iteration-1]+1e-4)) < 0.02       
         logic4 = logic2 and logic3
+        logic5 = iteration>=7
 
-        if logic1 or logic4:
+        if logic1 or logic4 or logic5:
             DEM_slave_final = "DEM_shift" + str(iteration-1) # just string
             sum_ShiftX = np.sum(ShiftX)
             sum_ShiftY = np.sum(ShiftY)
 
             # final shift vector [unit: m]
             shiftVec = [sum_ShiftX, sum_ShiftY]
-            np.savetxt(file_shiftVec, shiftVec, delimiter=',')
+            np.savetxt(file_shiftVec, shiftVec, delimiter=',')            
                
             arcpy.AddMessage("********************Final Result********************")
-            arcpy.AddMessage("Note: results are saved in {0}".format(dirOutputs))
-            arcpy.AddMessage("The final shifted DEM: {0}".format(DEM_slave_final))
+            arcpy.AddMessage("Note: results are saved in {0}".format(dirOutputs))            
             arcpy.AddMessage("The final shift X: {0:.1f}".format(sum_ShiftX))
-            arcpy.AddMessage("The final shift Y: {0:.1f}".format(sum_ShiftY))
-            
-            break
+            arcpy.AddMessage("The final shift Y: {0:.1f}".format(sum_ShiftY))            
+            break        
     
     # Shift the slave DEM
     DEM_slave_after = "DEM_shift" + str(iteration)
     arcpy.Shift_management(DEM_slave_before, DEM_slave_after, str(ShiftX1), str(ShiftY1))
     DEM_slave_before = DEM_slave_after
 
+# correct the shifted slave DEM
+DEM_slave_correct = Raster(DEM_slave_final) + round(result_mean_dh[iteration-1],1)
+DEM_slave_correct.save("DEM_slave_correct.tif")
+arcpy.AddMessage("The final shifted DEM: " + "DEM_slave_correct.tif")
+
 if iteration>2:
-    for i in range(iteration-2):
+    for i in range(iteration-1):
         iter_tag = i+1
         indata_del = "DEM_shift"+str(iter_tag)
         arcpy.Delete_management(indata_del)
+
+# save
+dh_final = DEM_master - DEM_slave_correct
+dh_final.save(os.path.join(dirOutputs, "dh_final"))
 
 endTime = time.clock()
 arcpy.AddMessage("Running time: {0}".format(int(endTime-startTime)))

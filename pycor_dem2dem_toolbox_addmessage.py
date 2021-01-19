@@ -45,6 +45,7 @@ else:
 
 # Set environment workspace in current directory
 env.workspace = arcpy.GetParameterAsText(0)
+arcpy.mapping.MapDocument("CURRENT")
 
 # Folder for outputs
 dirOutputs= os.path.join(env.workspace, 'outputs')
@@ -112,8 +113,10 @@ while 1:
     file_dh = os.path.join(dirOutputs, "dh" + str(iteration) + '.csv')
     np.savetxt(file_dh, dh_mask_arr, delimiter=',')
     
-    # Criteria: |dh| < 70 m and slope > 5 degrees
-    index1 = np.where((dh_mask_arr>-70) & (dh_mask_arr<70) & (slp_mask_arr>5))
+    # Criteria: |dh| < 70 m and 5 < slope < 45.
+    # slope>5 is cited from Purinton&Bookhagen, 2018, Earth Surface Dynamics.
+    # slope<45 is cited from Berthier et al., 2019, Journal of Glaciology.
+    index1 = np.where((dh_mask_arr>-70) & (dh_mask_arr<70) & (slp_mask_arr>5) & (slp_mask_arr<45))
     dh_mask_arr1 = dh_mask_arr[index1[0], index1[1]]
     slp_mask_arr1 = slp_mask_arr[index1[0], index1[1]]
     asp_mask_arr1 = asp_mask_arr[index1[0], index1[1]]
@@ -180,12 +183,13 @@ while 1:
     
     # Solve for parameters (a, b and c) iteratively until the improvement of std less than 2%
     if iteration>1:
-        logic1 = result_std_dh[iteration] < 1e-1
-        logic2 = result_std_dh[iteration] <= result_std_dh[iteration-1]
-        logic3 = (result_std_dh[iteration-1] - result_std_dh[iteration])/(result_std_dh[iteration-1]+1e-4) < 0.02        
+        logic1 = abs(result_std_dh[iteration]) < 0.1
+        logic2 = abs(result_std_dh[iteration]) <= abs(result_std_dh[iteration-1])
+        logic3 = abs((result_std_dh[iteration-1] - result_std_dh[iteration])/(result_std_dh[iteration-1]+1e-4)) < 0.02       
         logic4 = logic2 and logic3
+        logic5 = iteration>=7
 
-        if logic1 or logic4:
+        if logic1 or logic4 or logic5:
             DEM_slave_final = "DEM_shift" + str(iteration-1) # just string
             sum_ShiftX = np.sum(ShiftX)
             sum_ShiftY = np.sum(ShiftY)
@@ -196,10 +200,8 @@ while 1:
                
             arcpy.AddMessage("********************Final Result********************")
             arcpy.AddMessage("Note: results are saved in {0}".format(dirOutputs))
-            arcpy.AddMessage("The final shifted DEM: {0}".format(DEM_slave_final))
             arcpy.AddMessage("The final shift X: {0:.1f}".format(sum_ShiftX))
-            arcpy.AddMessage("The final shift Y: {0:.1f}".format(sum_ShiftY))
-            
+            arcpy.AddMessage("The final shift Y: {0:.1f}".format(sum_ShiftY))            
             break
     
     # Shift the slave DEM
@@ -207,11 +209,16 @@ while 1:
     arcpy.Shift_management(DEM_slave_before, DEM_slave_after, str(ShiftX1), str(ShiftY1))
     DEM_slave_before = DEM_slave_after
 
+# correct the shifted slave DEM
+DEM_slave_correct = Raster(DEM_slave_final) + round(result_mean_dh[iteration-1],1)
+DEM_slave_correct.save("DEM_slave_correct.tif")
+arcpy.AddMessage("The final shifted DEM: " + "DEM_slave_correct.tif")
+
 if iteration>2:
-    for i in range(iteration-2):
+    for i in range(iteration-1):
         iter_tag = i+1
         indata_del = "DEM_shift"+str(iter_tag)
         arcpy.Delete_management(indata_del)
-
+        
 endTime = time.clock()
 arcpy.AddMessage("Running time: {0}".format(int(endTime-startTime)))

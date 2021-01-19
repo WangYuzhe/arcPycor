@@ -130,8 +130,10 @@ while 1:
     asp_table = np.array(asp_table[1:])
     dh_table = elev_point - elev_dem
 
-    # Criteria: |dh| < 70 m and slope > 5 degrees
-    index1 = np.where((dh_table>-70) & (dh_table<70) & (slp_table>5))
+    # Criteria: |dh| < 70 m and 5 < slope < 45.
+    # slope>5 is cited from Purinton&Bookhagen, 2018, Earth Surface Dynamics.
+    # slope<45 is cited from Berthier et al., 2019, Journal of Glaciology.
+    index1 = np.where((dh_mask_arr>-70) & (dh_mask_arr<70) & (slp_mask_arr>5) & (slp_mask_arr<45))
     dh_table1 = dh_table[index1]
     slp_table1 = slp_table[index1]
     asp_table1 = asp_table[index1]
@@ -202,12 +204,13 @@ while 1:
     
     # Solve for parameters (a, b and c) iteratively until the improvement of std less than 2%
     if iteration>1:
-        logic1 = result_std_dh[iteration] < 1e-1
-        logic2 = result_std_dh[iteration] <= result_std_dh[iteration-1]
-        logic3 = (result_std_dh[iteration-1] - result_std_dh[iteration])/(result_std_dh[iteration-1]+1e-4) < 0.02
+        logic1 = abs(result_std_dh[iteration]) < 0.1
+        logic2 = abs(result_std_dh[iteration]) <= abs(result_std_dh[iteration-1])
+        logic3 = abs((result_std_dh[iteration-1] - result_std_dh[iteration])/(result_std_dh[iteration-1]+1e-4)) < 0.02       
         logic4 = logic2 and logic3
+        logic5 = iteration>=7
 
-        if logic1 or logic4:
+        if logic1 or logic4 or logic5:
             DEM_final = "DEMsh" + str(iteration-1)
             sum_ShiftX = np.sum(ShiftX)
             sum_ShiftY = np.sum(ShiftY)
@@ -218,9 +221,8 @@ while 1:
 
             arcpy.AddMessage("********************Final Result********************")
             arcpy.AddMessage("Note: results are saved in {0}".format(dirOutputs))
-            arcpy.AddMessage("The final shifted DEM: {0}".format(DEM_final))
             arcpy.AddMessage("The final shift X: {0:.1f}".format(sum_ShiftX))
-            arcpy.AddMessage("The final shift Y: {0:.1f}".format(sum_ShiftY))
+            arcpy.AddMessage("The final shift Y: {0:.1f}".format(sum_ShiftY))            
             break
 
     # Output shifted DEM
@@ -228,8 +230,13 @@ while 1:
     arcpy.Shift_management(DEM_before, DEM_after, str(ShiftX1), str(ShiftY1))
     DEM_before = DEM_after
 
+# correct the shifted slave DEM
+DEM_slave_correct = Raster(DEM_final) + round(result_mean_dh[iteration-1],1)
+DEM_slave_correct.save("DEM_slave_correct.tif")
+arcpy.AddMessage("The final shifted DEM: " + "DEM_slave_correct.tif")
+
 if iteration>2:
-    for i in range(iteration-2):
+    for i in range(iteration-1):
         iter_tag = i+1
         indata_del = "DEMsh"+str(iter_tag)
         arcpy.Delete_management(indata_del)
