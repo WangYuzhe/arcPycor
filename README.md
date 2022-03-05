@@ -1,7 +1,7 @@
 # arcPycor
 arcPycor can automatically align the geolocation of DEMs and elevation points (e.g. ICESat, LiDAR) by specifying stable terrain areas. We provide two modes of arcPycor, i.e. ArcToolbox mode and standalone mode.
 
-arcPycor was developed by Dr. Yuzhe Wang (wangyuzhe AT ucas.ac.cn), now a postdoc at the University of Chinese Academy of Sciences.
+arcPycor was developed by Dr. Yuzhe Wang (yuzhe.wang AT foxmail.com)  now at Shandong Normal University.
 
 # Implementation
 **Dependencies**:
