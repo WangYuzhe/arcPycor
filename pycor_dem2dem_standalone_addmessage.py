@@ -1,4 +1,4 @@
-﻿'''
+'''
 pycor_dem2dem.py
 
 Description: Coregister slave DEM to master DEM using Nuth-Kaeaeb algorithm.
@@ -21,7 +21,7 @@ History:
 * 2019-5-11, delete unused variables, optimize the codes for converging
 
 Author: Yuzhe Wang
-E-mail: wangyuzhe@ucas.ac.cn
+E-mail: yuzhe.wang@foxmail.com
 Affiliation:
 1. Colledge of Resources and Environment, University of Chinese Academy Sciences, Beijing
 2. State Key Laboratory of Cryospheric Sciences, Chinese Academy of Sciences, Lanzhou
@@ -44,12 +44,9 @@ else:
     raise LicenseError
 
 # Set environment workspace in current directory
-# path_script = os.path.dirname(os.path.abspath(__file__))
-# env.workspace = os.path.join(path_script, 'benchmark_data')
-# env.workspace = r"E:\Mix\WYZ_AcademicWriting\paper_pycor\demo_data\benchmark_data"
-# env.workspace = r"E:\Mix\WYZ_AcademicWriting\paper_pycor\demo_data\test_site_data\everest"
-env.workspace = r"E:\Mix\WYZ_AcademicWriting\paper_pycor\demo_data\test_site_data\karakoram"
-# env.workspace = r"E:\Mix\WYZ_AcademicWriting\paper_pycor\demo_data\test_site_data\tibet"
+path_script = os.path.dirname(os.path.abspath(__file__))
+env.workspace = os.path.join(path_script, 'benchmark_data')
+#env.workspace = r".\benchmark_data"
 
 # Folder for outputs
 dirOutputs = os.path.join(env.workspace, 'outputs')
@@ -57,26 +54,10 @@ if os.path.exists(dirOutputs):
     shutil.rmtree(dirOutputs)
 os.makedirs(dirOutputs)
 
-# # master DEM
-# DEM_master = "DEM_master.tif"
-
-# # slave DEM
-# DEM_slave = "DEM_slave1.tif"
-
-# # stable terrain
-# stable_terrain = "OffGlacier.shp"
-
-# DEM_master = "tdm_eve_utm"
-# DEM_slave = "srtm_eve_utm"
-# stable_terrain = "stable_terrain_eve.shp"
-
-DEM_master = "tdm_kar_utm"
-DEM_slave = "aster_kar_utm"
-stable_terrain = "stable_terrain_kar.shp"
-
-# DEM_master = "srtm_tib_utm"
-# DEM_slave = "aster_tib_utm"
-# stable_terrain = "stable_terrain_tib.shp"
+# Specify master DEM, slave DEM and stable terrain
+DEM_master = "DEM_master.tif"
+DEM_slave = "DEM_slave1.tif"
+stable_terrain = "OffGlacier.shp"
 
 # Initializations
 iteration = 0
@@ -214,7 +195,7 @@ while 1:
             sum_ShiftY = np.sum(ShiftY)
 
             # final shift vector [unit: m]
-            shiftVec = [sum_ShiftX, sum_ShiftY]
+            shiftVec = [sum_ShiftX, sum_ShiftY, round(result_mean_dh[iteration-1],1)]
             np.savetxt(file_shiftVec, shiftVec, delimiter=',')            
                
             arcpy.AddMessage("********************Final Result********************")
