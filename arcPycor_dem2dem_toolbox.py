@@ -19,12 +19,11 @@ History:
 * 2014-11-8, Created
 * 2019-5-7, path management
 * 2019-5-11, delete unused variables, optimize the codes for converging
+* 2023-5-26, set snap raster, test on ArcMap 10.8
 
 Author: Yuzhe Wang
-E-mail: wangyuzhe@ucas.ac.cn
-Affiliation:
-1. Colledge of Resources and Environment, University of Chinese Academy Sciences, Beijing
-2. State Key Laboratory of Cryospheric Sciences, Chinese Academy of Sciences, Lanzhou
+E-mail: yuzhe.wang@foxmail.com
+Affiliation: Colledge of Geography and Environment, Shandong Normal University
 '''
 
 import os
@@ -45,7 +44,6 @@ else:
 
 # Set environment workspace in current directory
 env.workspace = arcpy.GetParameterAsText(0)
-arcpy.mapping.MapDocument("CURRENT")
 
 # Folder for outputs
 dirOutputs= os.path.join(env.workspace, 'outputs')
@@ -61,6 +59,9 @@ DEM_slave = arcpy.GetParameterAsText(2)
 
 # stable terrain
 OffGlacier = arcpy.GetParameterAsText(3)
+
+# corrected DEM
+corrected_DEM = arcpy.GetParameterAsText(4)
 
 # Initializations
 iteration = 0
@@ -80,7 +81,7 @@ def CosineFitting(x, a, b, c):
     return a*np.cos(b - np.pi/180*x) + c
 
 while 1:
-    iteration = iteration + 1
+    iteration += 1
     arcpy.AddMessage("--------------------------------------------------------------")
     arcpy.AddMessage("Iteration {0} is running!".format(iteration))
     
@@ -97,9 +98,13 @@ while 1:
     dh_mask = ExtractByMask(dh, OffGlacier)
     
     # Mask 'slp' and 'asp' using 'dh_mask' in order to keep same georeference as 'dh_mask'
+    env.snapRaster = dh_mask
     slp_mask = ExtractByMask(slp, dh_mask)
     asp_mask = ExtractByMask(asp, dh_mask)
     
+    env.snapRaster = None
+    
+    # delete dh, slp, and asp after extraction
     del dh, slp, asp
 
     # Raster to Array
@@ -108,11 +113,7 @@ while 1:
     asp_mask_arr = arcpy.RasterToNumPyArray(asp_mask, nodata_to_value=-32768)
 
     del dh_mask, slp_mask, asp_mask
-    
-    # save "dh_mask" as csv file
-    file_dh = os.path.join(dirOutputs, "dh" + str(iteration) + '.csv')
-    np.savetxt(file_dh, dh_mask_arr, delimiter=',')
-    
+       
     # Criteria: |dh| < 70 m and 5 < slope < 45.
     # slope>5 is cited from Purinton&Bookhagen, 2018, Earth Surface Dynamics.
     # slope<45 is cited from Berthier et al., 2019, Journal of Glaciology.
@@ -190,7 +191,6 @@ while 1:
         logic5 = iteration>=7
 
         if logic1 or logic4 or logic5:
-            DEM_slave_final = "DEM_shift" + str(iteration-1) # just string
             sum_ShiftX = np.sum(ShiftX)
             sum_ShiftY = np.sum(ShiftY)
 
@@ -206,19 +206,25 @@ while 1:
     
     # Shift the slave DEM
     DEM_slave_after = "DEM_shift" + str(iteration)
+    if arcpy.Exists(DEM_slave_after):
+        arcpy.Delete_management(DEM_slave_after)
+    
     arcpy.Shift_management(DEM_slave_before, DEM_slave_after, str(ShiftX1), str(ShiftY1))
     DEM_slave_before = DEM_slave_after
 
 # correct the shifted slave DEM
-DEM_slave_correct = Raster(DEM_slave_final) + round(result_mean_dh[iteration-1],1)
-DEM_slave_correct.save("DEM_slave_correct.tif")
-arcpy.AddMessage("The final shifted DEM: " + "DEM_slave_correct.tif")
+DEM_slave_correct = Raster("DEM_shift" + str(iteration-1)) + round(result_mean_dh[iteration-1],1)
 
-if iteration>2:
-    for i in range(iteration-1):
-        iter_tag = i+1
-        indata_del = "DEM_shift"+str(iter_tag)
-        arcpy.Delete_management(indata_del)
-        
+# delete shifted DEMs
+for i in range(1,iteration):
+    arcpy.Delete_management("DEM_shift"+str(iteration))
+    
+# save corrected slave DEM
+if arcpy.Exists(corrected_DEM):
+    arcpy.Delete_management(corrected_DEM)
+    
+DEM_slave_correct.save(corrected_DEM)
+arcpy.AddMessage("The final shifted DEM: " + corrected_DEM)
+
 endTime = time.clock()
-arcpy.AddMessage("Running time: {0}".format(int(endTime-startTime)))
+arcpy.AddMessage("Running time: {0} s".format(int(endTime-startTime)))

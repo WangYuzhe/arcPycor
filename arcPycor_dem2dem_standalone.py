@@ -54,10 +54,9 @@ os.makedirs(dirOutputs)
 
 # Specify master DEM, slave DEM, stable terrain and corrected DEM
 DEM_master = "DEM_master.tif"
-DEM_slave = "DEM_slave4.tif"
+DEM_slave = "DEM_slave1.tif"
 stable_terrain = "OffGlacier.shp"
-
-corrected_DEM = "DEM_slave_correct.tif"
+corrected_DEM = 'DEM_corrected.tif'
 
 # Initializations
 iteration = 0
@@ -99,6 +98,7 @@ while 1:
     asp_mask = ExtractByMask(asp, dh_mask)
     
     env.snapRaster = None
+    
     # delete dh, slp, and asp after extraction
     del dh, slp, asp
 
@@ -186,7 +186,6 @@ while 1:
         logic5 = iteration>=7
 
         if logic1 or logic4 or logic5:
-            #DEM_slave_final = "DEM_shift" + str(iteration-1) # just string
             sum_ShiftX = np.sum(ShiftX)
             sum_ShiftY = np.sum(ShiftY)
 
@@ -210,16 +209,17 @@ while 1:
 
 # correct the shifted slave DEM
 DEM_slave_correct = Raster("DEM_shift" + str(iteration-1)) + round(result_mean_dh[iteration-1],1)
-# DEM_slave_correct = Raster(DEM_slave_final) + round(result_mean_dh[iteration-1],1)
 
+# delete shifted DEMs
+for i in range(1,iteration):
+    arcpy.Delete_management("DEM_shift" + str(i))
+
+# save corrected slave DEM
 if arcpy.Exists(corrected_DEM):
     arcpy.Delete_management(corrected_DEM)
 
 DEM_slave_correct.save(corrected_DEM)
 print "The final shifted DEM: " + corrected_DEM
-
-for i in range(1,iteration):
-    arcpy.Delete_management("DEM_shift"+str(iteration))
 
 endTime = time.clock()
 print "Running time: {0} s".format(int(endTime-startTime))
