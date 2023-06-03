@@ -53,10 +53,10 @@ if os.path.exists(dirOutputs):
 os.makedirs(dirOutputs)
 
 # Specify master DEM, slave DEM, stable terrain and corrected DEM
-DEM_master = "DEM_master.tif"
-DEM_slave = "DEM_slave1.tif"
-stable_terrain = "OffGlacier.shp"
-corrected_DEM = 'DEM_corrected.tif'
+DEM_master = "DEM_master.tif" # Set your master DEM
+DEM_slave = "DEM_slave1.tif" # Set your slave DEM that is the DEM needed to be coregistered
+stable_terrain = "OffGlacier.shp" # Set the stable terrain assumed no elevation change
+corrected_DEM = 'DEM_corrected.tif' # Set the output DEM
 
 # Initializations
 iteration = 0
