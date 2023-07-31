@@ -33,7 +33,7 @@ import numpy as np
 from scipy.optimize import curve_fit
 import arcpy
 from arcpy import env
-from arcpy.sa import Raster, Slope, Aspect, ExtractByMask
+from arcpy.sa import Raster, Slope, Aspect, ExtractByMask, Plus
 
 startTime = time.clock()
 
@@ -208,11 +208,9 @@ while 1:
     DEM_slave_before = DEM_slave_after
 
 # correct the shifted slave DEM
-DEM_slave_correct = Raster("DEM_shift" + str(iteration-1)) + round(result_mean_dh[iteration-1],1)
-
-# delete shifted DEMs
-for i in range(1,iteration):
-    arcpy.Delete_management("DEM_shift" + str(i))
+final_shifted_slave_dem = Raster("DEM_shift" + str(iteration-1))
+mean_dh_offglacier = round(result_mean_dh[iteration-1], 1)
+DEM_slave_correct = Plus(final_shifted_slave_dem, mean_dh_offglacier)
 
 # save corrected slave DEM
 if arcpy.Exists(corrected_DEM):
@@ -220,6 +218,10 @@ if arcpy.Exists(corrected_DEM):
 
 DEM_slave_correct.save(corrected_DEM)
 print "The final shifted DEM: " + corrected_DEM
+
+# delete shifted DEMs
+for i in range(1,iteration):
+    arcpy.Delete_management("DEM_shift" + str(i))
 
 endTime = time.clock()
 print "Running time: {0} s".format(int(endTime-startTime))
